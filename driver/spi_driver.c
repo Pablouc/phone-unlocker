@@ -14,6 +14,51 @@
 #include "ssd1306.h"
 
 static struct spi_device *connected_spi_device;
+dev_t dev = 0;
+static struct cdev arduino_spi_cdev;
+static struct class *dev_class;
+static struct cdev arduino_spi_cdev;
+
+/*************** Driver functions **********************/
+static int etx_open(struct inode *inode, struct file *file);
+static int etx_release(struct inode *inode, struct file *file);
+static ssize_t etx_read(struct file *filp, 
+                char __user *buf, size_t len,loff_t * off);
+static ssize_t etx_write(struct file *filp, 
+                const char *buf, size_t len, loff_t * off);
+/******************************************************/
+ 
+//File operation structure 
+static struct file_operations fops =
+{
+  .owner          = THIS_MODULE,
+  .read           = arduino_spi_read,
+  .write          = arduino_spi_write,
+  .open           = arduino_spi_open,
+  .release        = arduino_spi_release,
+};
+
+static ssize_t arduino_spi_read(struct file *filp, 
+                char __user *buf, size_t len, loff_t *off)
+{
+  uint8_t state = 0;
+  copy_to_user(buf, &state, 1);
+  
+  pr_info("Executed read function!");
+  return 0;
+}
+
+static int arduino_spi_release(struct inode *inode, struct file *file)
+{
+  pr_info("Device File Closed...!!!\n");
+  return 0;
+}
+
+static int arduino_spi_open(struct inode *inode, struct file *file)
+{
+  pr_info("Device File Opened...!!!\n");
+  return 0;
+}
 
 //Register information about your slave device
 struct spi_board_info connected_spi_device_info = 
@@ -56,6 +101,34 @@ static int __init arduino_spi_init(void)
   int     ret;
   struct  spi_master *master;
   
+  /*Allocating Major number*/
+  if((alloc_chrdev_region(&dev, 0, 1, "arduino_spi_Dev")) <0){
+    pr_err("Cannot allocate major number\n");
+    goto r_unreg;
+  }
+  pr_info("Major = %d Minor = %d \n",MAJOR(dev), MINOR(dev));
+ 
+  /*Creating cdev structure*/
+  cdev_init(&arduino_spi_cdev, &fops);
+ 
+  /*Adding character device to the system*/
+  if((cdev_add(&arduino_spi_cdev,dev,1)) < 0){
+    pr_err("Cannot add the device to the system\n");
+    goto r_del;
+  }
+ 
+  /*Creating struct class*/
+  if(IS_ERR(dev_class = class_create(THIS_MODULE,"arduino_spi_class"))){
+    pr_err("Cannot create the struct class\n");
+    goto r_class;
+  }
+ 
+  /*Creating device*/
+  if(IS_ERR(device_create(dev_class,NULL,dev,NULL,"arduino_spi_device"))){
+    pr_err( "Cannot create the Device \n");
+    goto r_device;
+  }
+
   master = spi_busnum_to_master( connected_spi_device_info.bus_num );
   if( master == NULL )
   {
@@ -85,6 +158,17 @@ static int __init arduino_spi_init(void)
   
   pr_info("SPI driver Registered\n");
   return 0;
+
+r_device:
+  device_destroy(dev_class,dev);
+r_class:
+  class_destroy(dev_class);
+r_del:
+  cdev_del(&etx_cdev);
+r_unreg:
+  unregister_chrdev_region(dev,1);
+  
+  return -1;
 }
  
 /****************************************************************************
@@ -96,7 +180,11 @@ static void __exit arduino_spi_exit(void)
 { 
   if( connected_spi_device )
   {
-    spi_unregister_device( etx_spi_device );    // Unregister the SPI slave
+    spi_unregister_device( arduino_spi_device );    // Unregister the SPI slave
+    device_destroy(dev_class,dev);
+    class_destroy(dev_class);
+    cdev_del(&arduino_spi_cdev);
+    unregister_chrdev_region(dev, 1);
     pr_info("SPI driver Unregistered\n");
   }
 }

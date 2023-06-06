@@ -22,7 +22,7 @@ struct spi_board_info etx_spi_device_info =
 {
   .modalias     = "etx-spi-ssd1306-driver",
   .max_speed_hz = 4000000,              // speed your device (slave) can handle
-  .bus_num      = SPI_BUS_NUM,          // SPI 1
+  .bus_num      = 1,          // SPI 1
   .chip_select  = 0,                    // Use 0 Chip select (GPIO 18)
   .mode         = SPI_MODE_0            // SPI mode 0
 };
