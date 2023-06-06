@@ -1,0 +1,1 @@
+cmd_/home/pi/Documents/os/proyectoIII/repo/driver/arduino_driver.ko := ld -r  -EL  --build-id=sha1  -T scripts/module.lds -o /home/pi/Documents/os/proyectoIII/repo/driver/arduino_driver.ko /home/pi/Documents/os/proyectoIII/repo/driver/arduino_driver.o /home/pi/Documents/os/proyectoIII/repo/driver/arduino_driver.mod.o;  true

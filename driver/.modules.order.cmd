@@ -1,0 +1,1 @@
+cmd_/home/pi/Documents/os/proyectoIII/repo/driver/modules.order := {   echo /home/pi/Documents/os/proyectoIII/repo/driver/arduino_driver.ko; :; } | awk '!x[$$0]++' - > /home/pi/Documents/os/proyectoIII/repo/driver/modules.order

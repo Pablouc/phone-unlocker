@@ -6,18 +6,25 @@
 *  \author     kevv87, based on the work of EmbeTronicX
 *
 *******************************************************************************/
+#include <linux/spi/spi.h>
+#include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>
-#include <linux/spi/spi.h>
+#include <linux/kdev_t.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
+#include <linux/device.h>
 #include <linux/delay.h>
+#include <linux/uaccess.h>  //copy_to/from_user()
+#include <linux/err.h>
 
-#include "ssd1306.h"
 
 static struct spi_device *connected_spi_device;
 dev_t dev = 0;
 static struct cdev arduino_spi_cdev;
 static struct class *dev_class;
 static struct cdev arduino_spi_cdev;
+uint8_t state = 0;
 
 /*************** Driver functions **********************/
 static int arduino_spi_open(struct inode *inode, struct file *file);
@@ -41,8 +48,9 @@ static struct file_operations fops =
 static ssize_t arduino_spi_read(struct file *filp, 
                 char __user *buf, size_t len, loff_t *off)
 {
-  uint8_t state = 0;
-  copy_to_user(buf, &state, 1);
+  if ( copy_to_user(buf, &state, 1) ) {
+    pr_err("ERROR: Not all the bytes have been copied to user\n");
+  }
   
   pr_info("Executed read function!");
   return 0;
@@ -65,7 +73,7 @@ struct spi_board_info connected_spi_device_info =
 {
   .modalias     = "spi-arduino-driver",
   .max_speed_hz = 4000000,              // speed your device (slave) can handle
-  .bus_num      = SPI_BUS_NUM,          // SPI 1
+  .bus_num      = 1,          // SPI 1
   .chip_select  = 0,                    // Use 0 Chip select (GPIO 18)
   .mode         = SPI_MODE_0            // SPI mode 0
 };
@@ -73,24 +81,25 @@ struct spi_board_info connected_spi_device_info =
 /****************************************************************************
  * Details : This function writes the 1-byte data to the slave device using SPI.
  ****************************************************************************/
-int arduino_spi_write( uint8_t data )
+int arduino_spi_write( struct file *filp,
+		const char __user *buf, size_t len, loff_t *off)
 {
-  int     ret = -1;
-  uint8_t rx  = 0x00;
+  uint8_t rec_buf[10] = {0};
+
+  if ( copy_from_user( rec_buf, buf, len) > 0 ) {
+    pr_err("ERROR: Not all the bytes have been copied from user \n");
+  }
+
+  pr_info("Write function: GPIO_21 Set = %c\n", rec_buf[0]);
   
   if( connected_spi_device )
   {    
-    struct spi_transfer  tr = 
-    {
-      .tx_buf  = &data,
-      .rx_buf = &rx,
-      .len    = 1,
-    };
-
-    spi_sync_transfer( connected_spi_device, &tr, 1 );
+    if (spi_write( connected_spi_device, &rec_buf[0], 1) < 0) {
+      pr_err("ERROR: Error while writing\n");
+    }
   }
   
-  return( ret );
+  return len;
 }
 
 /****************************************************************************
@@ -164,7 +173,7 @@ r_device:
 r_class:
   class_destroy(dev_class);
 r_del:
-  cdev_del(&etx_cdev);
+  cdev_del(&arduino_spi_cdev);
 r_unreg:
   unregister_chrdev_region(dev,1);
   
@@ -180,7 +189,7 @@ static void __exit arduino_spi_exit(void)
 { 
   if( connected_spi_device )
   {
-    spi_unregister_device( arduino_spi_device );    // Unregister the SPI slave
+    spi_unregister_device( connected_spi_device );    // Unregister the SPI slave
     device_destroy(dev_class,dev);
     class_destroy(dev_class);
     cdev_del(&arduino_spi_cdev);
