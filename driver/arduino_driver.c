@@ -20,11 +20,11 @@ static struct class *dev_class;
 static struct cdev arduino_spi_cdev;
 
 /*************** Driver functions **********************/
-static int etx_open(struct inode *inode, struct file *file);
-static int etx_release(struct inode *inode, struct file *file);
-static ssize_t etx_read(struct file *filp, 
+static int arduino_spi_open(struct inode *inode, struct file *file);
+static int arduino_spi_release(struct inode *inode, struct file *file);
+static ssize_t arduino_spi_read(struct file *filp, 
                 char __user *buf, size_t len,loff_t * off);
-static ssize_t etx_write(struct file *filp, 
+static ssize_t arduino_spi_write(struct file *filp, 
                 const char *buf, size_t len, loff_t * off);
 /******************************************************/
  
