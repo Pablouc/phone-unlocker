@@ -1,1 +1,0 @@
-cmd_/home/pi/Documents/os/proyectoIII/repo/driver/arduino_driver.mod := { echo  /home/pi/Documents/os/proyectoIII/repo/driver/arduino_driver.o;  echo; } > /home/pi/Documents/os/proyectoIII/repo/driver/arduino_driver.mod

@@ -91,6 +91,7 @@ int arduino_spi_write( struct file *filp,
   }
 
   pr_info("Write function: GPIO_21 Set = %c\n", rec_buf[0]);
+  printk(KERN_INFO "Write function: GPIO_21 Set = %c\n", rec_buf[0]);
   
   if( connected_spi_device )
   {    
