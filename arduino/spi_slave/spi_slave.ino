@@ -46,5 +46,7 @@ void loop (void)
         Serial.println(operation);
         break;
     }
+    process_it = false;
+    SPDR = 10;
   }
 }  // end of loop
