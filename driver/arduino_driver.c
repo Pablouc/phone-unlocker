@@ -90,14 +90,20 @@ int arduino_spi_write( struct file *filp,
     pr_err("ERROR: Not all the bytes have been copied from user \n");
   }
 
-  pr_info("Write function: GPIO_21 Set = %c\n", rec_buf[0]);
-  printk(KERN_INFO "Write function: GPIO_21 Set = %c\n", rec_buf[0]);
+  pr_info("Write function:  Set = %d\n", rec_buf[0]);
   
   if( connected_spi_device )
   {    
-    if (spi_write( connected_spi_device, &rec_buf[0], 1) < 0) {
+    struct spi_transfer transfer_data = {
+      .tx_buf = &rec_buf[0],
+      .rx_buf = &state,
+      .len = 1
+    };
+    if (spi_sync_transfer( connected_spi_device, &transfer_data, 1) < 0) {
       pr_err("ERROR: Error while writing\n");
     }
+  } else {
+    pr_err("ERROR: No device connected to SPI\n");
   }
   
   return len;
