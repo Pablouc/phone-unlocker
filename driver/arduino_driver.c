@@ -48,6 +48,7 @@ static struct file_operations fops =
 static ssize_t arduino_spi_read(struct file *filp, 
                 char __user *buf, size_t len, loff_t *off)
 {
+  pr_info("We have %d on state\n", state);
   if ( copy_to_user(buf, &state, 1) ) {
     pr_err("ERROR: Not all the bytes have been copied to user\n");
   }
@@ -102,6 +103,8 @@ int arduino_spi_write( struct file *filp,
     if (spi_sync_transfer( connected_spi_device, &transfer_data, 1) < 0) {
       pr_err("ERROR: Error while writing\n");
     }
+
+    pr_info("Receiving: %d from trans", state);
   } else {
     pr_err("ERROR: No device connected to SPI\n");
   }
