@@ -9,5 +9,6 @@ typedef struct  {
 
 int press_button(ardlib_ctx_t *ctx, int button);
 int init_ardlib(ardlib_ctx_t *context);
+int change_size(ardlib_ctx_t *ctx, int size);
 
 #endif

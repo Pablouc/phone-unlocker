@@ -103,6 +103,7 @@ int arduino_spi_write( struct file *filp,
     if (spi_sync_transfer( connected_spi_device, &transfer_data, 1) < 0) {
       pr_err("ERROR: Error while writing\n");
     }
+    msleep(1000);
 
     pr_info("Receiving: %d from trans", state);
   } else {
