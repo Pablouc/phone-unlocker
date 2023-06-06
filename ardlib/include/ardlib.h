@@ -1,6 +1,13 @@
 #ifndef ARDLIB_H
 #define ARDLIB_H
 
-int press_button(int button);
+#include <semaphore.h>
+
+typedef struct  {
+  sem_t driver_sem;
+} ardlib_ctx_t;
+
+int press_button(ardlib_ctx_t *ctx, int button);
+int init_ardlib(ardlib_ctx_t *context);
 
 #endif

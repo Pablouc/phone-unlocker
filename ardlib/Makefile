@@ -4,6 +4,7 @@ $AR = r
 $PWD = $(shell pwd)
 
 COMPILER_FLAGS += -Werror -I./include
+LINKER_FLAGS += -pthread
 
 all: ardlib compile_static
 
@@ -15,7 +16,7 @@ compile_static: ardlib
 	rm -rf *.o
 
 test: compile_static
-	$(CC) $(COMPILER_FLAGS) -o test.o test/test_ardlib.c -L$(PWD) -lardlib
+	$(CC) $(COMPILER_FLAGS) -o test.o test/test_ardlib.c $(LINKER_FLAGS) -L$(PWD) -lardlib
 	./test.o
 
 clean: 
