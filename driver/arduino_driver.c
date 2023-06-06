@@ -112,6 +112,12 @@ int arduino_spi_write( struct file *filp,
   return len;
 }
 
+static int my_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+  add_uevent_var(env, "DEVMODE=%#o", 0666);
+  return 0;
+}
+
 /****************************************************************************
  * Details : This function Register and Initilize the SPI.
  ****************************************************************************/
@@ -141,6 +147,8 @@ static int __init arduino_spi_init(void)
     pr_err("Cannot create the struct class\n");
     goto r_class;
   }
+
+  dev_class->dev_uevent = my_uevent;
  
   /*Creating device*/
   if(IS_ERR(device_create(dev_class,NULL,dev,NULL,"arduino_spi_device"))){
