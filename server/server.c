@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 
 #define MAXBUF 1024
 
@@ -54,7 +55,7 @@ void decrypt_message(char* buffer, int buffer_length) {
     }
 }
 
-/* Función para recibir el mensaje del cliente */
+/* Función para recibir el mensaje del cliente y descifrarlo */
 int receive_message(int sockfd, char* buffer, struct sockaddr_in cliaddr, socklen_t addr_len) {
     int n = recvfrom(sockfd, buffer, MAXBUF, 0, (struct sockaddr *)&cliaddr, &addr_len);
     if (n < 0) {
@@ -68,7 +69,30 @@ int receive_message(int sockfd, char* buffer, struct sockaddr_in cliaddr, sockle
 
     printf("Mensaje recibido (cifrado): %s\n", buffer_copy);
 
-    decrypt_message(buffer, n);
+    int pipefd[2];
+    if (pipe(pipefd) < 0) {
+        perror("Fallo al crear el pipe");
+        exit(EXIT_FAILURE);
+    }
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("Fallo al crear el proceso");
+        exit(EXIT_FAILURE);
+    } else if (pid == 0) {
+        /* Proceso hijo para descifrar el mensaje */
+        close(pipefd[0]);  // Cerrar el extremo de lectura del pipe.
+        decrypt_message(buffer, n);
+        write(pipefd[1], buffer, n);  // Enviar el mensaje descifrado al proceso padre.
+        close(pipefd[1]);  // Cerrar el extremo de escritura del pipe.
+        exit(EXIT_SUCCESS);
+    }
+
+    /* Esperar a que el proceso hijo termine */
+    wait(NULL);
+    close(pipefd[1]);  // Cerrar el extremo de escritura del pipe.
+    read(pipefd[0], buffer, n);  // Leer el mensaje descifrado del pipe.
+    close(pipefd[0]);  // Cerrar el extremo de lectura del pipe.
 
     return n;
 }
