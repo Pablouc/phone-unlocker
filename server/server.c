@@ -37,6 +37,23 @@ void bind_socket(int sockfd, struct sockaddr_in servaddr) {
     }
 }
 
+/* Función para descifrar el mensaje */
+void decrypt_message(char* buffer, int buffer_length) {
+    int shift = 6;  // Cantidad de desplazamiento para el cifrado César.
+
+    /* Descifrado César */
+    for (int i = 0; i < buffer_length; ++i) {
+        char c = buffer[i];
+        if ('a' <= c && c <= 'z') {
+            buffer[i] = 'a' + (c - 'a' - shift + 26) % 26;
+        } else if ('A' <= c && c <= 'Z') {
+            buffer[i] = 'A' + (c - 'A' - shift + 26) % 26;
+        } else if ('0' <= c && c <= '9') {
+            buffer[i] = '0' + (c - '0' - shift + 10) % 10;
+        }
+    }
+}
+
 /* Función para recibir el mensaje del cliente */
 int receive_message(int sockfd, char* buffer, struct sockaddr_in cliaddr, socklen_t addr_len) {
     int n = recvfrom(sockfd, buffer, MAXBUF, 0, (struct sockaddr *)&cliaddr, &addr_len);
@@ -45,6 +62,14 @@ int receive_message(int sockfd, char* buffer, struct sockaddr_in cliaddr, sockle
         exit(EXIT_FAILURE);
     }
     buffer[n] = '\0';
+
+    char buffer_copy[MAXBUF];
+    strcpy(buffer_copy, buffer);
+
+    printf("Mensaje recibido (cifrado): %s\n", buffer_copy);
+
+    decrypt_message(buffer, n);
+
     return n;
 }
 
@@ -58,17 +83,18 @@ int main(int argc, char *argv[]) {
     servaddr = configure_server();
     bind_socket(sockfd, servaddr);
 
+    printf("Esperando cliente... \n");
     while (1) {
         addr_len = sizeof(cliaddr);
 
         int n = receive_message(sockfd, buffer, cliaddr, addr_len);
 
-        /* Aquí es donde deberías implementar la descifrado del mensaje. */
-        
-        printf("Mensaje recibido: %s\n", buffer);
+        printf("Mensaje recibido (descifrado): %s\n", buffer);
 
         /* Limpiar el buffer */
         memset(buffer, 0, sizeof(buffer));
+
+        printf("Esperando cliente... \n");
     }
 
     /* Cerrar el socket */
