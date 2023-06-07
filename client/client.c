@@ -31,10 +31,28 @@ struct sockaddr_in configure_server() {
 
 /* Función para obtener y cifrar el mensaje */
 void get_and_encrypt_message(char* buffer) {
+    int shift = 6;  // Cantidad de desplazamiento para el cifrado César.
+
     printf("Ingrese un mensaje para enviar al servidor:\n");
     fgets(buffer, MAXBUF, stdin);
     buffer[strcspn(buffer, "\n")] = 0; // quitar el newline
-    // Aquí es donde debes implementar la cifrado del mensaje.
+
+    printf("El mensaje a cifrar es: \n");
+    printf("%s\n", buffer);
+
+    /* Cifrado César */
+    for (int i = 0; buffer[i] != '\0'; ++i) {
+        char c = buffer[i];
+        if ('a' <= c && c <= 'z') {
+            buffer[i] = 'a' + (c - 'a' + shift) % 26;
+        } else if ('A' <= c && c <= 'Z') {
+            buffer[i] = 'A' + (c - 'A' + shift) % 26;
+        } else if ('0' <= c && c <= '9') {
+            buffer[i] = '0' + (c - '0' + shift) % 10;
+        }
+    }
+    printf("El mensaje cifrado es: \n");
+    printf("%s\n", buffer);
 }
 
 /* Función para enviar el mensaje al servidor */
