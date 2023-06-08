@@ -7,7 +7,7 @@ all: server
 
 server: server.c
 	make -C ../ardlib
-	$(CC) $(COMPILER_FLAGS) -o server.o server.c -L../ardlib -lardlib
+	$(CC) $(COMPILER_FLAGS) -o server.o server.c -L../ardlib -lardlib -lpthread
 
 run: server
 	./server.o
