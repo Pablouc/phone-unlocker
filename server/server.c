@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <ardlib.h>
 
 #define MAXBUF 1024
 
@@ -56,7 +57,7 @@ void decrypt_message(char* buffer, int buffer_length) {
 }
 
 /* Función para recibir el mensaje del cliente y descifrarlo */
-int receive_message(int sockfd, char* buffer, struct sockaddr_in cliaddr, socklen_t addr_len) {
+int receive_message(int sockfd, char* buffer, struct sockaddr_in cliaddr, socklen_t addr_len, ardlib_ctx_t *ctx) {
     int n = recvfrom(sockfd, buffer, MAXBUF, 0, (struct sockaddr *)&cliaddr, &addr_len);
     if (n < 0) {
         perror("Error al recibir el mensaje");
@@ -97,11 +98,31 @@ int receive_message(int sockfd, char* buffer, struct sockaddr_in cliaddr, sockle
     return n;
 }
 
+/* Función para presionar los botones en el hardware */
+void press_buttons(ardlib_ctx_t *ctx, char* buffer, int buffer_length) {
+    for (int i = 0; i < buffer_length; ++i) {
+        int button = buffer[i] - '0';  // Convertir el carácter a entero
+        if (0 <= button && button <= 9) {
+            press_button(ctx, button);
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
     int sockfd;
     struct sockaddr_in servaddr, cliaddr;
     char buffer[MAXBUF];
     socklen_t addr_len;
+
+    ardlib_ctx_t *ctx = malloc(sizeof(ardlib_ctx_t));
+    if (ctx == NULL) {
+        perror("No se pudo asignar memoria para ctx");
+        exit(EXIT_FAILURE);
+    }
+    if (init_ardlib(ctx) != 0) {
+        perror("Fallo al inicializar ardlib");
+        exit(EXIT_FAILURE);
+    }
 
     sockfd = create_socket();
     servaddr = configure_server();
@@ -111,7 +132,9 @@ int main(int argc, char *argv[]) {
     while (1) {
         addr_len = sizeof(cliaddr);
 
-        int n = receive_message(sockfd, buffer, cliaddr, addr_len);
+        int n = receive_message(sockfd, buffer, cliaddr, addr_len, ctx);
+
+        press_buttons(ctx, buffer, n);
 
         printf("Mensaje recibido (descifrado): %s\n", buffer);
 
@@ -123,6 +146,8 @@ int main(int argc, char *argv[]) {
 
     /* Cerrar el socket */
     close(sockfd);
+
+    free(ctx);  // Liberar la memoria asignada para ctx
 
     return 0;
 }

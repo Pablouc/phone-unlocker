@@ -24,9 +24,9 @@ void setup (void)
   operation = 0;
   process_it = false;
 
-  motor_x.attach(50);
-  motor_y.attach(48);
-  motor_z.attach(46);
+  motor_x.attach(3);
+  motor_y.attach(4);
+  motor_z.attach(5);
   
 }  // end of setup
 
@@ -62,7 +62,7 @@ void loop (void)
         Serial.println("Press 4");
           motor_x.write(55);
           delay(2000);
-          motor_z.write(60 * multiplier);
+          motor_z.write(60);
           delay(2000);
           motor_z.write(0);
           delay(2000);
@@ -73,7 +73,7 @@ void loop (void)
         Serial.println("Press 5");
         motor_x.write(30);
         delay(2000);
-        motor_z.write(40 * multiplier);
+        motor_z.write(40);
         delay(2000);
         motor_z.write(0);
         delay(2000);
