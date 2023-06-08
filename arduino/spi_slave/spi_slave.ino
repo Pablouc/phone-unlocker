@@ -1,7 +1,12 @@
 #include "pins_arduino.h"
+#include <Servo.h>
+
+Servo motor_x, motor_y, motor_z;
 
 volatile byte operation;
 volatile boolean process_it;
+
+
 
 void setup (void)
 {
@@ -18,6 +23,11 @@ void setup (void)
   
   operation = 0;
   process_it = false;
+
+  motor_x.attach(50);
+  motor_y.attach(48);
+  motor_z.attach(46);
+  
 }  // end of setup
 
 
@@ -50,9 +60,34 @@ void loop (void)
         break;
       case 4:
         Serial.println("Press 4");
+          motor_x.write(55);
+          delay(2000);
+          motor_z.write(60 * multiplier);
+          delay(2000);
+          motor_z.write(0);
+          delay(2000);
+          motor_x.write(0);
+          delay(2000);
+        break;
+      case 5:
+        Serial.println("Press 5");
+        motor_x.write(30);
+        delay(2000);
+        motor_z.write(40 * multiplier);
+        delay(2000);
+        motor_z.write(0);
+        delay(2000);
+        motor_x.write(0);
+        delay(2000);
         break;
       case 6:
         Serial.println("Press 6");
+        motor_z.write(40);
+        delay(2000);
+        motor_y.write(0);
+        delay(2000);
+        motor_z.write(0);
+        delay(2000);
         break;
       case 7:
         Serial.println("Press 7");
