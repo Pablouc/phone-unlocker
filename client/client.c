@@ -6,8 +6,10 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <libwebsockets.h>
 
 #define MAXBUF 1024
+#define EXAMPLE_RX_BUFFER_SIZE 2048
 
 /* Función para crear el socket */
 int create_socket() {
@@ -29,50 +31,75 @@ struct sockaddr_in configure_server() {
     return dest;
 }
 
-/* Función para obtener y cifrar el mensaje */
-void get_and_encrypt_message(char* buffer) {
-    int shift = 6;  // Cantidad de desplazamiento para el cifrado César.
-
-    printf("Ingrese un mensaje para enviar al servidor:\n");
-    fgets(buffer, MAXBUF, stdin);
-    buffer[strcspn(buffer, "\n")] = 0; // quitar el newline
-
-    printf("El mensaje a cifrar es: \n");
-    printf("%s\n", buffer);
-
-    /* Cifrado César */
-    for (int i = 0; buffer[i] != '\0'; ++i) {
-        char c = buffer[i];
-        if ('a' <= c && c <= 'z') {
-            buffer[i] = 'a' + (c - 'a' + shift) % 26;
-        } else if ('A' <= c && c <= 'Z') {
-            buffer[i] = 'A' + (c - 'A' + shift) % 26;
-        } else if ('0' <= c && c <= '9') {
-            buffer[i] = '0' + (c - '0' + shift) % 10;
-        }
-    }
-    printf("El mensaje cifrado es: \n");
-    printf("%s\n", buffer);
-}
-
 /* Función para enviar el mensaje al servidor */
 void send_message(int sockfd, char* buffer, struct sockaddr_in dest) {
     sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr *)&dest, sizeof(dest));
 }
 
-int main(int argc, char *argv[]) {
+// Función de callback para manejar eventos de WebSocket
+static int websocket_callback(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len) {
     int sockfd;
     struct sockaddr_in dest;
     char buffer[MAXBUF];
 
-    sockfd = create_socket();
-    dest = configure_server();
-    get_and_encrypt_message(buffer);
-    send_message(sockfd, buffer, dest);
+    switch (reason) {
+        case LWS_CALLBACK_ESTABLISHED:
+            printf("Conexión establecida\n");
+            break;
 
-    /* Limpiar y cerrar */
-    memset(buffer, 0, sizeof(buffer));
-    close(sockfd);
+        case LWS_CALLBACK_RECEIVE:
+            printf("Mensaje recibido: %.*s\n", (int)len, (char*)in);
+
+            // Aquí iniciamos la comunicación UDP
+            sockfd = create_socket();
+            dest = configure_server();
+            strncpy(buffer, (char*)in, len);
+            buffer[len] = '\0';
+            send_message(sockfd, buffer, dest);
+            memset(buffer, 0, sizeof(buffer));
+            close(sockfd);
+            break;
+
+        default:
+            break;
+    }
+
+    return 0;
+}
+
+// Configuración del protocolo WebSocket
+static struct lws_protocols protocols[] = {
+    {
+        "websocket",
+        websocket_callback,
+        0,
+        EXAMPLE_RX_BUFFER_SIZE,
+    },
+    { NULL, NULL, 0, 0 } // Marca el final de la lista de protocolos
+};
+
+int main(void) {
+    struct lws_context* context;
+    struct lws_context_creation_info info;
+
+    memset(&info, 0, sizeof(info));
+    info.port = 8080; // Puerto por defecto en el que escucha el servidor WebSocket
+    info.iface = "wlp2s0"; // Interfaz de red en la que escucha el servidor WebSocket
+    info.protocols = protocols;
+
+    // Crea el contexto del servidor
+    context = lws_create_context(&info);
+    if (!context) {
+        printf("Error al crear el contexto del servidor WebSocket\n");
+        return -1;
+    }
+
+    // Ejecuta el ciclo principal del servidor WebSocket
+    while (1) {
+        lws_service(context, 50); // Espera eventos durante 50 ms
+    }
+
+    lws_context_destroy(context);
 
     return 0;
 }
