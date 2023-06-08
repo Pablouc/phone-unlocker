@@ -1,12 +1,13 @@
 CC = gcc
 # CFLAGS = -Wall -Wextra -pedantic
-CFLAGS = -pedantic
-
+# CFLAGS = -pedantic 
+COMPILER_FLAGS += -Werror -I../ardlib/include
 
 all: server
 
 server: server.c
-	$(CC) $(CFLAGS) -o server.o server.c
+	make -C ../ardlib
+	$(CC) $(COMPILER_FLAGS) -o server.o server.c -L../ardlib -lardlib
 
 run: server
 	./server.o
