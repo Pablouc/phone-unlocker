@@ -4,7 +4,7 @@ CFLAGS = -pedantic
 all: client
 
 client: client.c
-	$(CC) $(CFLAGS) -o client.o client.c
+	$(CC) $(CFLAGS) -o client.o client.c -lwebsockets
 
 run: client
 	./client.o

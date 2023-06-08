@@ -84,7 +84,7 @@ int main(void) {
 
     memset(&info, 0, sizeof(info));
     info.port = 8080; // Puerto por defecto en el que escucha el servidor WebSocket
-    info.iface = "wlp2s0"; // Interfaz de red en la que escucha el servidor WebSocket
+    info.iface = "wlan0"; // Interfaz de red en la que escucha el servidor WebSocket
     info.protocols = protocols;
 
     // Crea el contexto del servidor
