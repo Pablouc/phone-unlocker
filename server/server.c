@@ -41,7 +41,7 @@ void bind_socket(int sockfd, struct sockaddr_in servaddr) {
 /* Función para descifrar el mensaje */
 void decrypt_message(char* buffer, int buffer_length) {
     int shift = 6;  // Cantidad de desplazamiento para el cifrado César.
-
+    
     /* Descifrado César */
     for (int i = 0; i < buffer_length; ++i) {
         char c = buffer[i];
